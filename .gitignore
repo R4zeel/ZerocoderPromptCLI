@@ -1,0 +1,6 @@
+venv
+.env
+pyrightconfig.json
+*.pem
+task.txt
+__pycache__
