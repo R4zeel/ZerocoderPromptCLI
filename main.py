@@ -4,6 +4,7 @@ import json
 
 from gigachat import get_gigachat_response
 from yandexgpt import get_yandexgpt_response
+from geodata import get_coords, get_weather
 
 
 def main():
@@ -11,7 +12,8 @@ def main():
     #     "name": input("Enter city name: "),
     #     "genre": input("Enter genre: "),
     # }
-    print(get_gigachat_response("test", "horror", 200))
+    # print(get_gigachat_response("test", "horror", 200))
+    pass
 
 
 if __name__ == "__main__":
