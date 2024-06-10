@@ -1,5 +1,7 @@
 import os
 import json
+from datetime import datetime
+import sys
 
 import requests
 from uuid import uuid4
@@ -46,10 +48,18 @@ def get_gigachat_token() -> str:
 
 
 def get_gigachat_response(
-    prompt: str, prompt_genre: str, prompt_len: int
+    prompt_city: str, prompt_genre: str, weather: str, prompt_len: int
 ) -> str:
-    """Отправка запросов к API GigaChat."""
+    """
+    Отправка запросов к API GigaChat.
 
+    prompt - указание данных, используемых в запросе.
+    prompt_genre - ожидаемый жанр ответа на запрос.
+    weather - температура в градусах по цельсию.
+    prompt_len - длина запроса.
+    """
+
+    timestamp = datetime.now()
     prompt_headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -59,7 +69,16 @@ def get_gigachat_response(
     prompt_payload = json.dumps(
         {
             "model": "GigaChat",
-            "messages": [{"role": "user", "content": f"{prompt}"}],
+            "messages": [
+                {
+                    "role": "user",
+                    "content": f"Напиши сказку про погоду на завтра в "
+                    f"городе {prompt_city}"
+                    f"в жанре {prompt_genre}. Погода будет составлять "
+                    f"{weather} градусов. Длина сказки не должна "
+                    f"превышать {prompt_len} символов.",
+                }
+            ],
             "max_tokens": prompt_len,
         }
     )
@@ -73,4 +92,8 @@ def get_gigachat_response(
     except requests.exceptions.ConnectionError as error:
         raise error
     data = response.json()
-    return data
+    sys.stdout.write(
+        f"GigaChat execution time: {datetime.now() - timestamp} \n"
+        f"File name: result_gigachat.txt \n"
+    )
+    return data.get("choices")[0].get("message").get("content")

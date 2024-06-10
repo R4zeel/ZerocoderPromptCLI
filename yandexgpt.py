@@ -1,5 +1,7 @@
 import os
+import sys
 import json
+from datetime import datetime
 
 import requests
 from dotenv import load_dotenv
@@ -33,41 +35,47 @@ def get_iam_token():
 
 
 def get_yandexgpt_response(
-    prompt: str, prompt_genre: str, prompt_len: int
+    prompt_city: str,
+    prompt_genre: str,
+    weather: str,
+    prompt_len: int,
 ) -> str:
     """
     Генерация текста с помощью YandexGPT.
 
     prompt - указание данных, используемых в запросе.
     prompt_genre - ожидаемый жанр ответа на запрос.
+    weather - температура в градусах по цельсию.
     prompt_len - длина запроса.
     """
 
+    timestamp = datetime.now()
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {get_iam_token()}",
     }
-    payload = json.dumps(
-        {
-            "modelUri": f"gpt://{CATALOGUE_ID}/yandexgpt/latest",
-            "completionOptions": {
-                "stream": False,
-                "temperature": 0.1,
-                "maxTokens": prompt_len,
+    payload = {
+        "modelUri": f"gpt://{CATALOGUE_ID}/yandexgpt/latest",
+        "completionOptions": {
+            "stream": False,
+            "temperature": 0.1,
+            "maxTokens": prompt_len,
+        },
+        "messages": [
+            {
+                "role": "system",
+                "text": "Ты — рассказчик.",
             },
-            "messages": [
-                {
-                    "role": "system",
-                    "text": "Ты — рассказчик.",
-                },
-                {
-                    "role": "user",
-                    "text": "Вид текста: пост в телеграмме."
-                    "Тема: преимущества YandexGPT в копирайтинге.",
-                },
-            ],
-        }
-    )
+            {
+                "role": "user",
+                "text": f"Напиши сказку про погоду на завтра в городе "
+                f"{prompt_city} в жанре {prompt_genre}. Погода на завтра "
+                f"будет составлять - {weather} градусов. Если название "
+                f"города на английском - переведи его на русский. "
+                f"Длина сказки не должна превышать {prompt_len} символов.",
+            },
+        ],
+    }
     try:
         response = requests.post(
             YANDEX_PROMPT_URL,
@@ -78,4 +86,8 @@ def get_yandexgpt_response(
     except requests.exceptions.ConnectionError as error:
         raise error
     data = response.json()
-    return data
+    sys.stdout.write(
+        f"YandexGPT execution time: {datetime.now() - timestamp} \n"
+        f"File name: result_yandexgpt.txt \n"
+    )
+    return data.get("result").get("alternatives")[0].get("message").get("text")
